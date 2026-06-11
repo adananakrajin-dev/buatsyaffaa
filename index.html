@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just for You</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght=700;800&family=Poppins:wght=400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --pink-soft: #fce4ec;
+            --pink-bold: #f06292;
+            --pink-deep: #d81b60;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .bg-particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .particle-heart {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 20px;
+            bottom: -50px;
+            animation: floatUp 10s infinite linear;
+        }
+
+        .container {
+            text-align: center;
+            animation: fadeIn 1.5s ease-in;
+            padding: 20px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .opening-img {
+            width: 130px; height: 130px;
+            object-fit: cover; border-radius: 50%;
+            border: 4px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(216, 129, 157, 0.4);
+            margin-bottom: 20px; animation: popUp 0.8s ease;
+        }
+
+        .subjdl {
+            font-family: 'Playfair Display', serif;
+            font-size: 50px; color: var(--pink-deep);
+            margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn-main {
+            background-color: #ffffff; color: var(--pink-bold);
+            border: 2px solid var(--pink-bold);
+            padding: 12px 40px; font-size: 16px; font-weight: 700;
+            border-radius: 50px; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(240, 98, 146, 0.3);
+        }
+
+        .btn-main:hover {
+            background-color: var(--pink-bold); color: #ffffff;
+            transform: translateY(-3px); box-shadow: 0 8px 20px rgba(240, 98, 146, 0.5);
+        }
+
+        #evade-stage {
+            display: none; position: fixed;
+            width: 100%; height: 100%; top: 0; left: 0; z-index: 10;
+            touch-action: none; /* Kunci scroll hanya pas game tangkep hati */
+        }
+
+        #evade-heart {
+            position: absolute; width: 90px; height: 90px; border-radius: 50%;
+            background-image: url('sya.jpeg'); background-size: cover; background-position: center;
+            border: 4px solid var(--pink-bold); box-shadow: 0 10px 20px rgba(240, 98, 146, 0.5);
+            transition: top 0.2s ease-out, left 0.2s ease-out, transform 0.8s ease-in, opacity 0.8s ease-in, filter 0.8s;
+            cursor: pointer; z-index: 20; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+
+        .taunt-emoji {
+            position: absolute; font-size: 35px; pointer-events: none;
+            animation: floatUpFade 1s forwards; z-index: 10;
+        }
+
+        #puzzle-stage {
+            display: none; position: fixed;
+            width: 100%; height: 100%; top: 0; left: 0;
+            text-align: center; padding-top: 40px; z-index: 10;
+            touch-action: none; /* Kunci scroll pas main puzzle */
+        }
+
+        .puzzle-title { font-family: 'Playfair Display'; color: var(--pink-deep); font-size: 32px; }
+
+        .photo-heart-container {
+            position: relative;
+            width: 280px; height: 280px;
+            margin: 30px auto;
+            border: 3px dashed var(--pink-bold);
+            border-radius: 20px;
+            display: flex; justify-content: center; align-items: center;
+            -webkit-mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M462.3 62.6C407.5 15.9 326 24.3 275.7 76.2L256 96.5l-19.7-20.3C186.1 24.3 104.5 15.9 49.7 62.6c-62.8 53.6-66.1 149.8-9.9 207.9l193.5 199.8c12.5 12.9 32.8 12.9 45.3 0l193.5-199.8c56.3-58.1 53-154.3-9.8-207.9z"/></svg>');
+            -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+            background-color: rgba(255, 255, 255, 0.4);
+            transition: all 1.5s ease-in-out;
+            overflow: hidden;
+        }
+
+        .photo-heart-container.done {
+            border: none;
+            background-color: transparent;
+            background-image: url('syaaaaaaa.jpeg');
+            background-size: cover;
+            background-position: center;
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(216, 129, 157, 0.8);
+            animation: pulseHeart 2s infinite alternate;
+        }
+
+        .photo-quad {
+            position: absolute;
+            width: 50%; height: 50%;
+            background-image: url('syaaaaaaa.jpeg');
+            background-size: 200%;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+        .photo-quad.show { opacity: 1; }
+        .photo-quad.q1 { top: 0; left: 0; background-position: 0% 0%; }
+        .photo-quad.q2 { top: 0; right: 0; background-position: 100% 0%; }
+        .photo-quad.q3 { bottom: 0; left: 0; background-position: 0% 100%; }
+        .photo-quad.q4 { bottom: 0; right: 0; background-position: 100% 100%; }
+
+        .puzzle-piece {
+            position: absolute;
+            font-size: 50px; color: var(--pink-deep);
+            cursor: grab; z-index: 30;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
+            touch-action: none;
+        }
+        .puzzle-piece:active { cursor: grabbing; transform: scale(1.2); }
+
+        #bouquet-stage, #ngambek-stage {
+            display: none; text-align: center; z-index: 50; width: 100%; padding: 20px;
+        }
+
+        .bouquet-box {
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            padding: 30px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(216, 129, 157, 0.25);
+            max-width: 380px; width: 100%; margin: 0 auto;
+        }
+
+        .bouquet-visual {
+            position: relative; height: 220px; display: flex;
+            justify-content: center; align-items: flex-end; margin-bottom: 15px;
+        }
+
+        .big-bouquet { font-size: 140px; z-index: 1; animation: popUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .tucked-photos { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 5; pointer-events: none; }
+        .tucked-photo {
+            width: 80px; height: 100px; object-fit: cover; border: 4px solid #ffffff; border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2); position: absolute; animation: popUp 1s both;
+        }
+        .tp-1 { left: 15%; top: 10px; transform: rotate(-15deg); animation-delay: 0.3s; }
+        .tp-2 { left: 38%; top: -5px; transform: rotate(0deg); z-index: 6; animation-delay: 0.5s; }
+        .tp-3 { right: 15%; top: 10px; transform: rotate(15deg); animation-delay: 0.7s; }
+
+        .letter-text {
+            color: #8e717a; font-size: 14px; margin: 20px 0; line-height: 1.6; font-style: italic;
+            background: #fff5f7; padding: 15px; border-radius: 15px; border-left: 4px solid var(--pink-bold);
+        }
+
+        #quiz-stage { display: none; text-align: center; z-index: 50; width: 100%; padding: 20px; }
+        .heart-bar { margin-bottom: 20px; font-size: 35px; color: rgba(255,255,255,0.8); }
+        .heart-bar .filled { color: var(--pink-deep); animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .quiz-box {
+            background: rgba(255, 255, 255, 0.95); padding: 30px 20px; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(216, 129, 157, 0.2); max-width: 350px; margin: 0 auto;
+        }
+
+        #result-stage { display: none; text-align: center; width: 100%; padding: 20px; z-index: 50; }
+        .envelope-wrapper {
+            font-size: 120px; color: var(--pink-bold); cursor: pointer;
+            animation: pulseHeart 1.5s infinite alternate; margin-bottom: 20px; transition: 0.3s;
+            filter: drop-shadow(0 10px 20px rgba(216, 129, 157, 0.4));
+        }
+        .envelope-wrapper:hover { transform: scale(1.1); }
+        .glass-card {
+            display: none; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(216, 129, 157, 0.2);
+            max-width: 380px; margin: 0 auto; animation: fadeIn 0.8s;
+        }
+
+        /* Tombol di surat */
+        .letter-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .btn-secondary {
+            background-color: #fff5f7; color: var(--pink-deep);
+            border: 2px solid #fce4ec;
+            padding: 12px 40px; font-size: 15px; font-weight: 700;
+            border-radius: 50px; cursor: pointer; transition: 0.3s;
+            text-decoration: none; display: block; text-align: center;
+        }
+        .btn-secondary:hover {
+            background-color: #fce4ec;
+            transform: translateY(-2px);
+        }
+
+        @keyframes popUp { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes floatUpFade { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-60px) scale(1.4); opacity: 0; } }
+        @keyframes pulseHeart { from { transform: scale(1); } to { transform: scale(1.05); } }
+        @keyframes floatUp { 0% { transform: translateY(100vh) scale(0.5) rotate(0deg); opacity: 1; } 100% { transform: translateY(-10vh) scale(1.2) rotate(360deg); opacity: 0; } }
+
+        /* RESPONSIVE MOBILE TOTAL FIX */
+        @media (max-width: 600px) {
+            body { 
+                overflow-y: auto; /* Izinkan scroll vertikal secara global */
+                align-items: flex-start; 
+                padding: 40px 10px; 
+            }
+            .subjdl { font-size: 36px; }
+            .opening-img { width: 100px; height: 100px; }
+            .photo-heart-container { width: 220px; height: 220px; margin: 15px auto; }
+            .bouquet-visual { height: 160px; }
+            .big-bouquet { font-size: 90px; }
+            .tucked-photo { width: 60px; height: 78px; }
+            .puzzle-piece { font-size: 42px; }
+            .bouquet-box { padding: 25px 20px; }
+            .glass-card { padding: 25px 20px; }
+            .btn-main { padding: 11px 28px; font-size: 15px; }
+            .envelope-wrapper { font-size: 90px; }
+            #puzzle-stage { padding-top: 20px; }
+            .puzzle-title { font-size: 26px; }
+            .quiz-box { padding: 25px 20px; }
+        }
+
+        @media (max-width: 380px) {
+            .subjdl { font-size: 30px; }
+            .photo-heart-container { width: 190px; height: 190px; }
+            .big-bouquet { font-size: 76px; }
+            .tucked-photo { width: 52px; height: 66px; }
+            .puzzle-piece { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop><source src="sss.mp3" type="audio/mpeg"></audio>
+    <audio id="taunt-sound"><source src="ngeledek.mp3" type="audio/mpeg"></audio>
+
+    <div class="bg-particles" id="particles"></div>
+
+    <div class="container" id="main-ui">
+        <img src="syaa.jpeg" alt="Syafa" class="opening-img">
+        <h1 class="subjdl">Hi, Syafaaaa!</h1>
+        <p style="color: #8e717a; margin-bottom: 25px; font-size: 15px;">ahaha dia mampir lagii, main sebentar yu</p>
+        <button class="btn-main" onclick="startEvadeGame()">Start!</button>
+    </div>
+
+    <div id="evade-stage">
+        <div style="position:fixed; top:30px; width:100%; text-align:center; color:var(--pink-deep); font-weight:700; font-size: 18px; text-shadow: 1px 1px 2px #fff;">
+            coba tangkep kalo bisa!!
+        </div>
+        <div id="evade-heart" ontouchstart="dodgeHeart(event)" onmousedown="dodgeHeart(event)"></div>
+    </div>
+
+    <div id="puzzle-stage">
+        <h2 class="puzzle-title">lengkapin nih!</h2>
+        <p style="color: #8e717a; font-size: 14px; margin-bottom: 10px;">tarik (*drag*) kepingannya ke tengah ya!</p>
+        
+        <div class="photo-heart-container" id="drop-zone"></div>
+        
+        <div id="puzzle-pieces-container"></div>
+
+        <button id="btn-next-puzzle" class="btn-main" style="display:none; margin-top:20px; position: relative; z-index: 50;" onclick="goToBouquet()">Lanjut <i class="fa-solid fa-arrow-right"></i></button>
+    </div>
+
+    <div id="bouquet-stage">
+        <div class="bouquet-box">
+            <div class="bouquet-visual">
+                <div class="tucked-photos">
+                    <img src="syaaaa.jpeg" class="tucked-photo tp-1">
+                    <img src="syaaaaaa.jpeg" class="tucked-photo tp-2">
+                    <img src="syaaa.jpeg" class="tucked-photo tp-3">
+                </div>
+                <div class="big-bouquet">💐</div>
+            </div>
+            <h2 style="font-family: 'Playfair Display'; color: var(--pink-deep);">surprise!</h2>
+            <p class="letter-text">
+                "ahaha cape ya? <br>
+                nih buket bunga spesial. semoga sakitnyaa cepet sembuh  ya!"
+            </p>
+            <h3 style="color: #d8819d; font-size: 16px; margin-top: 10px;">gimana, seneng ga?</h3>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                <button class="btn-main" style="padding: 10px 20px;" onclick="handleBouquetChoice('seneng')">seneng!</button>
+                <button class="btn-main" style="padding: 10px 20px; background: #f8f9fa; color: #999; border-color: #ddd; box-shadow: none;" onclick="handleBouquetChoice('ga')">Ga!</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ngambek-stage">
+        <div class="bouquet-box">
+            <h1 style="font-size: 70px; margin-bottom: 10px;"></h1>
+            <h2 style="font-family: 'Playfair Display'; color: var(--pink-deep);">dih, kok gitu?!</h2>
+            <p style="color: #8e717a; margin-bottom: 25px;">harus seneng pokoknya! ga ada penolakan, lanjut main!</p>
+            <button class="btn-main" onclick="startQuiz()">Iya deh ampun, Lanjut</button>
+        </div>
+    </div>
+
+    <div id="quiz-stage">
+        <div class="heart-bar" id="heart-bar">
+            <i class="fa-solid fa-heart" style="color: #e0e0e0;" id="h-1"></i>
+            <i class="fa-solid fa-heart" style="color: #e0e0e0;" id="h-2"></i>
+            <i class="fa-solid fa-heart" style="color: #e0e0e0;" id="h-3"></i>
+        </div>
+        
+        <div class="quiz-box">
+            <h3 style="color: var(--pink-deep); margin-bottom: 10px; font-family: 'Playfair Display'; font-size: 24px;">Pertanyaan <span id="q-num">1</span>/5</h3>
+            <p id="q-text" style="color: #8e717a; margin-bottom: 25px; font-weight: 600;">Loading question...</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn-main" style="width: 100%;" id="opt-0" onclick="answerQuiz(0)">Option 1</button>
+                <button class="btn-main" style="width: 100%; background: #fff5f7; border-color: #fce4ec; color: var(--pink-deep); box-shadow: none;" id="opt-1" onclick="answerQuiz(1)">Option 2</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-stage">
+        <div id="win-envelope" style="display: none;">
+            <h2 style="font-family: 'Playfair Display'; color: var(--pink-deep); margin-bottom: 30px; font-size: 36px;">Surat!</h2>
+            <div class="envelope-wrapper" onclick="openLetter()">
+                <i class="fa-solid fa-envelope"></i>
+            </div>
+            <p style="color: #8e717a; font-size: 16px; font-weight: 600;">tap amplopnya buat buka!</p>
+        </div>
+
+        <div id="final-letter-card" class="glass-card">
+            <h2 style="font-family: 'Playfair Display'; color: var(--pink-deep); font-size: 36px; margin-bottom: 10px;">for You</h2>
+            <p style="color: #8e717a; margin: 20px 0; line-height: 1.8; text-align: left; background: #fff5f7; padding: 20px; border-radius: 15px; border-left: 5px solid var(--pink-bold);">
+                hai Syafa, ahaha dia berhasil jawab pertanyaannya!  <br><br>
+                makasih ya udah mau nyempetin main ginian. semoga bisa bikin moodboster hari ini. 
+                gimana saltikk ga wkwk?
+            </p>
+            <div class="letter-btn-group">
+                <a href="https://wa.me/6285711758009" target="_blank" class="btn-main" style="text-decoration: none; display: block; text-align: center;">chat gw!</a>
+                <button class="btn-secondary" onclick="location.reload()">main Lagi dari awal </button>
+            </div>
+        </div>
+
+        <div id="fail-card" class="glass-card">
+            <h1 style="font-size: 60px; margin-bottom: 15px;"></h1>
+            <h2 style="font-family: 'Playfair Display'; color: var(--pink-deep); font-size: 32px;">yaaah salah banyak!</h2>
+            <p style="color: #8e717a; margin: 20px 0; line-height: 1.8;">
+                ih kok kurang peka sih sama pertanyaannya, sedih tauuu <br>
+                coba ulang lagi mainnya dari awal sampe bener minimal 3!
+            </p>
+            <button class="btn-main" style="width: 100%; margin-top: 10px;" onclick="location.reload()">ulang Main Lagi</button>
+        </div>
+    </div>
+
+    <script>
+        // --- BACKGROUND PARTICLES ---
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const icons = ['fa-heart', 'fa-star', 'fa-sparkles'];
+            for(let i=0; i<15; i++) {
+                let p = document.createElement('i');
+                p.className = `fa-solid ${icons[Math.floor(Math.random() * icons.length)]} particle-heart`;
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                p.style.animationDelay = (Math.random() * 5) + 's';
+                p.style.fontSize = (Math.random() * 15 + 10) + 'px';
+                container.appendChild(p);
+            }
+        }
+        createParticles();
+
+        // --- STAGE 1: GOCEK ---
+        let dodges = 0; const maxDodges = 7;
+        const taunts = ["😜", "😝", "🤪", "🏃💨", "Wlee!", "Gak kena!"];
+
+        function startEvadeGame() {
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('evade-stage').style.display = 'block';
+            moveEvadeHeart();
+        }
+
+        function dodgeHeart(e) {
+            e.preventDefault(); 
+            if (dodges >= maxDodges) return;
+
+            const tauntSound = document.getElementById('taunt-sound');
+            tauntSound.currentTime = 0;
+            tauntSound.play().catch(e=>console.log(e));
+
+            const heart = document.getElementById('evade-heart');
+            const rect = heart.getBoundingClientRect();
+            
+            const taunt = document.createElement('div');
+            taunt.className = 'taunt-emoji';
+            taunt.innerText = taunts[Math.floor(Math.random() * taunts.length)];
+            taunt.style.left = (rect.left + rect.width/2) + 'px';
+            taunt.style.top = (rect.top + rect.height/2) + 'px';
+            document.getElementById('evade-stage').appendChild(taunt);
+            setTimeout(() => taunt.remove(), 1000);
+
+            dodges++;
+            if (dodges >= maxDodges) {
+                heart.style.left = '50%'; heart.style.top = '50%';
+                heart.style.transform = 'translate(-50%, -50%)';
+                setTimeout(() => {
+                    heart.style.transform = 'translate(-50%, -50%) scale(4)';
+                    heart.style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('evade-stage').style.display = 'none';
+                        startPuzzleStage(); 
+                    }, 800);
+                }, 500);
+            } else {
+                moveEvadeHeart();
+            }
+        }
+
+        function moveEvadeHeart() {
+            const heart = document.getElementById('evade-heart');
+            const newX = Math.max(15, Math.random() * (window.innerWidth - 110));
+            const newY = Math.max(100, Math.random() * (window.innerHeight - 120)); 
+            heart.style.left = '0'; heart.style.top = '0';
+            heart.style.transform = `translate(${newX}px, ${newY}px)`;
+        }
+
+        // --- STAGE 2: DRAG & DROP PUZZLE ---
+        let piecesInside = 0;
+
+        function startPuzzleStage() {
+            document.getElementById('puzzle-stage').style.display = 'block';
+            const container = document.getElementById('puzzle-pieces-container');
+            const dropZone = document.getElementById('drop-zone');
+
+            ['q1','q2','q3','q4'].forEach(q => {
+                let quad = document.createElement('div');
+                quad.className = 'photo-quad ' + q;
+                dropZone.appendChild(quad);
+            });
+
+            // Hitung penempatan kepingan puzzle agar pas di layar HP maupun PC
+            const isMobile = window.innerWidth < 600;
+
+            for(let i=0; i<4; i++) {
+                let piece = document.createElement('i');
+                piece.className = 'fa-solid fa-puzzle-piece puzzle-piece';
+                
+                let startX, startY;
+                if(isMobile) {
+                    // Kalau di HP, kepingan disusun rapi horizontal di bagian bawah layar biar gampang di-drag
+                    startX = (window.innerWidth / 4) * i + (window.innerWidth / 8) - 20;
+                    startY = window.innerHeight - 90 - (Math.random() * 20);
+                } else {
+                    // Kalau di PC pakai random normal
+                    startX = Math.random() * (window.innerWidth - 60);
+                    startY = window.innerHeight - 150 - (Math.random() * 80);
+                }
+                
+                piece.style.left = startX + 'px';
+                piece.style.top = startY + 'px';
+                
+                let isDragging = false;
+                let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+
+                piece.addEventListener('pointerdown', dragStart);
+
+                function dragStart(e) {
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                    isDragging = true;
+                    piece.style.zIndex = 40;
+                    document.addEventListener('pointermove', drag);
+                    document.addEventListener('pointerup', dragEnd);
+                }
+
+                function drag(e) {
+                    if (isDragging) {
+                        e.preventDefault();
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                        xOffset = currentX;
+                        yOffset = currentY;
+                        piece.style.transform = `translate(${currentX}px, ${currentY}px) scale(1.2)`;
+                    }
+                }
+
+                function dragEnd(e) {
+                    initialX = currentX;
+                    initialY = currentY;
+                    isDragging = false;
+                    piece.style.zIndex = 30;
+                    piece.style.transform = `translate(${currentX}px, ${currentY}px) scale(1)`;
+
+                    document.removeEventListener('pointermove', drag);
+                    document.removeEventListener('pointerup', dragEnd);
+
+                    const pieceRect = piece.getBoundingClientRect();
+                    const dropRect = dropZone.getBoundingClientRect();
+                    const pieceCenterX = pieceRect.left + pieceRect.width / 2;
+                    const pieceCenterY = pieceRect.top + pieceRect.height / 2;
+
+                    if (pieceCenterX > dropRect.left && pieceCenterX < dropRect.right &&
+                        pieceCenterY > dropRect.top && pieceCenterY < dropRect.bottom) {
+
+                        piece.style.display = 'none';
+
+                        const quads = ['q1','q2','q3','q4'];
+                        const quad = dropZone.querySelector('.photo-quad.' + quads[piecesInside]);
+                        if (quad) quad.classList.add('show');
+
+                        piecesInside++;
+
+                        if (piecesInside === 4) {
+                            setTimeout(() => {
+                                dropZone.classList.add('done');
+                                document.getElementById('btn-next-puzzle').style.display = 'inline-block';
+                            }, 900);
+                        }
+                    }
+                }
+                
+                container.appendChild(piece);
+            }
+        }
+
+        // --- Lanjut Stage ---
+        function goToBouquet() {
+            document.getElementById('puzzle-stage').style.display = 'none';
+            document.getElementById('bouquet-stage').style.display = 'block';
+        }
+
+        function handleBouquetChoice(c) {
+            document.getElementById('bouquet-stage').style.display = 'none';
+            if (c === 'seneng') startQuiz();
+            else document.getElementById('ngambek-stage').style.display = 'block';
+        }
+
+        // --- QUIZ ---
+        const quizData = [
+            { q: "Siapa yang paling ngangenin?", options: ["iqbal", "gw wkwk"], correct: 1 },
+            { q: "tebak kesukaan gw apa?", options: ["syafa", "mie ayam"], correct: 0 },
+            { q: "gw jurusan apa si?", options: ["dkv", "rpl"], correct: 1 },
+            { q: "Kalo lagi bosen enaknya ngapain?", options: ["Tidur", "chat syafa"], correct: 1 },
+            { q: "penasaran ga sama gw?", options: ["Biasa aja", "Banget!"], correct: 1 }
+        ];
+        let currentQ = 0, scoreQuiz = 0;
+
+        function startQuiz() {
+            document.getElementById('bg-music').play().catch(e=>console.log(e));
+            document.getElementById('ngambek-stage').style.display = 'none';
+            document.getElementById('quiz-stage').style.display = 'block';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQ >= quizData.length) { endQuiz(); return; }
+            document.getElementById('q-num').innerText = currentQ + 1;
+            document.getElementById('q-text').innerText = quizData[currentQ].q;
+            document.getElementById('opt-0').innerText = quizData[currentQ].options[0];
+            document.getElementById('opt-1').innerText = quizData[currentQ].options[1];
+        }
+
+        function answerQuiz(selected) {
+            if (selected === quizData[currentQ].correct) {
+                scoreQuiz++;
+                if (scoreQuiz <= 3) {
+                    let heartIcon = document.getElementById(`h-${scoreQuiz}`);
+                    heartIcon.style.color = "var(--pink-deep)";
+                    heartIcon.classList.add('filled');
+                }
+            }
+            currentQ++; loadQuestion();
+        }
+
+        function stopMusic() {
+            const music = document.getElementById('bg-music');
+            music.pause();
+            music.currentTime = 0;
+        }
+
+        function endQuiz() {
+            stopMusic();
+            document.getElementById('quiz-stage').style.display = 'none';
+            document.getElementById('result-stage').style.display = 'block';
+            if (scoreQuiz >= 3) document.getElementById('win-envelope').style.display = 'block';
+            else document.getElementById('fail-card').style.display = 'block';
+        }
+
+        function openLetter() {
+            document.getElementById('win-envelope').style.display = 'none';
+            document.getElementById('final-letter-card').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
